@@ -20,9 +20,9 @@ This documentation and all accompanying code, scripts, and manifests are provide
 
 | File | Description | Required? |
 | --- | --- | --- |
-| `01-contour-addon.yaml` | Deploys Contour Gateway API for UI ingress | Optional |
+| `01-contour-addon.yaml` | Deploys Contour Addon Package to VKS Cluster | Optional |
 | `02-vault-namespace.yaml` | Creates the `vault` namespace | Yes |
-| `03-gateway.yaml` | GatewayClass and Gateway routing rules | Optional |
+| `03-gateway.yaml` | Creates GatewayClass and Gateway objects | Optional |
 | `04-vault-self-signed-issuer.yaml` | cert-manager ClusterIssuer for internal Raft TLS | Yes |
 | `05-vault-external-tls-secret.yaml` | Let's Encrypt TLS secret for external UI access | Optional |
 | `06-vault-httproute.yaml` | Httproute object for Vault Web UI | Optional |
