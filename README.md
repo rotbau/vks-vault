@@ -301,7 +301,7 @@ secret-key-9988
 
 ## Troubleshooting
 
-### Error: `INSTALLATION FAILED: conflict occurred while applying object`
+**Error: INSTALLATION FAILED: conflict occurred while applying object**
 
 If you receive a webhook conflict error (e.g., `conflict with "vault-k8s" using admissionregistration.k8s.io/v1`), it is typically caused by a leftover webhook from a previous installation.
 
