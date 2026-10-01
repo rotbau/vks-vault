@@ -1,0 +1,55 @@
+apiVersion: addons.kubernetes.vmware.com/v1alpha1
+kind: AddonConfig
+metadata:
+  name: <clustername>-contour                      # ChangeMe
+  namespace: <vsphere namespace>                   # ChangeMe
+  annotations:
+    clusteraddon.addons.kubernetes.vmware.com/owned-for-deletion: "true"
+spec:
+  values:
+    contour:
+      configFileContents:
+        gateway:
+          gatewayRef:
+            name: contour
+            namespace: tanzu-system-ingress
+      useProxyProtocol: false
+      replicas: 1
+      logLevel: info
+    envoy:
+      service:
+        type: LoadBalancer
+        externalTrafficPolicy: Cluster
+        disableWait: false
+      hostPorts:
+        enable: true
+        http: 80
+        https: 443
+      hostNetwork: false
+      terminationGracePeriodSeconds: 300
+      logLevel: info
+    certificates:
+      caDuration: 8760h
+      caRenewBefore: 720h
+      leafDuration: 720h
+      leafRenewBefore: 360h
+---
+apiVersion: addons.kubernetes.vmware.com/v1alpha1
+kind: AddonInstall
+metadata:
+  name: <clustername>-contour-install                   # ChangeMe
+  namespace: <vsphere namespace>                        # ChangeMe
+  annotations:
+    clusteraddon.addons.kubernetes.vmware.com/owned-for-deletion: "true"
+spec:
+  addonRef:
+    name: contour                                                       # Base Addon name
+  releaseFilter:
+    ref:
+      name: contour.kubernetes.vmware.com.1.33.4-vmware.1-vks.1         # AddonRelease name
+      namespace: vmware-system-vks-public                               # Required namespace
+  addonConfigNameTemplate: '{{.cluster.name}}-{{.addon.name}}'
+  clusters:
+    - selector:
+        matchLabels:
+          cluster.x-k8s.io/cluster-name: <changeme to clustername>

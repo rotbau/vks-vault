@@ -1,0 +1,86 @@
+global:
+  tlsDisable: false
+
+server:
+# Uncomment below lines if you don't want to provide the ca-cert when running commands
+#  extraEnvironmentVars:
+#    VAULT_CACERT: "/vault/userconfig/vault-internal-tls/ca.crt"
+
+  dataStorage:
+    enabled: true
+    size: 10Gi
+    storageClass: "vks-primary-sp"
+    accessMode: ReadWriteOnce
+
+  volumes:
+    - name: vault-internal-tls # <-- UPDATED
+      secret:
+        secretName: vault-internal-tls-secret # <-- UPDATED
+
+  volumeMounts:
+    - name: vault-internal-tls # <-- UPDATED
+      mountPath: /vault/userconfig/vault-internal-tls # <-- UPDATED
+      readOnly: true
+
+  ha:
+    enabled: true
+    replicas: 3
+    raft:
+      enabled: true
+      setNodeId: true
+      config: |
+        ui = true
+
+        cluster_name = "vault-raft01"
+
+        storage "raft" {
+          path = "/vault/data/"
+
+          retry_join {
+            leader_api_addr       = "https://vault-0.vault-internal:8200"
+            leader_tls_servername = "vault-0.vault-internal"
+            leader_ca_cert_file   = "/vault/userconfig/vault-internal-tls/ca.crt" # <-- UPDATED
+          }
+          retry_join {
+            leader_api_addr       = "https://vault-1.vault-internal:8200"
+            leader_tls_servername = "vault-1.vault-internal"
+            leader_ca_cert_file   = "/vault/userconfig/vault-internal-tls/ca.crt" # <-- UPDATED
+          }
+          retry_join {
+            leader_api_addr       = "https://vault-2.vault-internal:8200"
+            leader_tls_servername = "vault-2.vault-internal"
+            leader_ca_cert_file   = "/vault/userconfig/vault-internal-tls/ca.crt" # <-- UPDATED
+          }
+        }
+
+        listener "tcp" {
+          address         = "[::]:8200"
+          cluster_address = "[::]:8201"
+          tls_cert_file   = "/vault/userconfig/vault-internal-tls/tls.crt" # <-- UPDATED
+          tls_key_file    = "/vault/userconfig/vault-internal-tls/tls.key" # <-- UPDATED
+          tls_min_version = "tls12"
+        }
+
+        service_registration "kubernetes" {}
+
+# Uncomment to use Vault Secrets CSI Provider
+#csi:
+#  enabled: true
+#  volumes:
+#    - name: vault-internal-tls
+#      secret:
+#        secretName: vault-internal-tls-secret
+#  volumeMounts:
+#    - name: vault-internal-tls
+#      mountPath: /vault/tls
+#      readOnly: true
+
+
+ui:
+  enabled: true
+  serviceType: "ClusterIP"
+  annotations:
+    projectcontour.io/upstream-protocol.tls: "8200"
+
+ingress:
+  enabled: false

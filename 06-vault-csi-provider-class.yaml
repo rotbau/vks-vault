@@ -1,0 +1,16 @@
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: vault-config-csi
+  namespace: default
+spec:
+  provider: vault
+  parameters:
+    # Target the cluster service endpoint rather than a single pod
+    vaultAddress: "https://vault-internal.vault.svc:8200"
+    roleName: "app-role"
+    vaultCACertPath: "/vault/tls/ca.crt"
+    objects: |
+      - objectName: "config.txt"
+        secretPath: "secret/data/config"
+        secretKey: "api_key"

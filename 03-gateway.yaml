@@ -1,0 +1,28 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: contour
+spec:
+  controllerName: projectcontour.io/gateway-controller
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: contour                     # must be contour; required to match gatewayref in contour configmap
+  namespace: tanzu-system-ingress
+spec:
+  gatewayClassName: contour         # must match gatewayclass name
+  listeners:
+    - name: vault-https
+      hostname: vault01.vtechk8s.com
+      port: 443
+      protocol: HTTPS
+      allowedRoutes:
+        namespaces:
+          from: All                 # allows HTTPRoute in the vault namespace to attach
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - group: ""
+            kind: Secret
+            name: vault-external-tls-secret
