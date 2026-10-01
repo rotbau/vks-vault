@@ -6,6 +6,16 @@ This installation uses self-signed certificates for internal Raft communication 
 
 This documentation and all accompanying code, scripts, and manifests are provided **"AS IS" WITHOUT WARRANTY OF ANY KIND**, either expressed or implied, including but not limited to the implied warranties of merchantability, fitness for a particular purpose, or non-infringement. The entire risk as to the quality, execution, and performance of these steps is borne entirely by you. In no event shall the authors be liable for any damages, system failures, data loss, or production outages resulting from the use of this guide. Use these materials at your own discretion.
 
+## Test Environment
+- vSphere 9.1.0 (Should work on 8.0u3i or later)
+- VKS 3.7 (Should work on most VKS versions)
+- Kubernetes 1.36.1 (refer to Vault documentation for supported versions)
+- Cert-Manager 1.21.1
+- Contour 1.33.4 (VKS addon)
+- Antrea CNI
+- Self-Signed cluster-issuer and certificate for internal Vault communication
+- Lets Encrypt certificate for Vault Web UI
+
 ## Repository Manifests
 
 | File | Description | Required? |
@@ -15,7 +25,8 @@ This documentation and all accompanying code, scripts, and manifests are provide
 | `03-gateway.yaml` | GatewayClass and Gateway routing rules | Optional |
 | `04-vault-self-signed-issuer.yaml` | cert-manager ClusterIssuer for internal Raft TLS | Yes |
 | `05-vault-external-tls-secret.yaml` | Let's Encrypt TLS secret for external UI access | Optional |
-| `06-vault-csi-provider-class.yaml` | SecretProviderClass for CSI Driver testing | Optional |
+| `06-vault-httproute.yaml` | Httproute object for Vault Web UI | Optional |
+| `07-vault-csi-provider-class.yaml` | SecretProviderClass for CSI Driver testing | Optional |
 | `helm-values.yaml` | Custom Helm values for Vault HA cluster | Yes |
 
 ## Prerequisites
@@ -58,7 +69,12 @@ An example HA-based `helm-values.yaml` file with appropriate hardening and confi
 helm install vault hashicorp/vault --values helm-values.yaml --namespace vault
 ```
 
-> **Note:** Immediately after installing, if you check `kubectl get po -n vault`, the Vault pods will show as `0/1 READY`. This is expected behavior; they will fail their readiness probes until they are initialized and unsealed in the next section.
+**Note:** Immediately after installing, if you check `kubectl get po -n vault`, the Vault pods will show as `0/1 READY`. This is expected behavior; they will fail their readiness probes until they are initialized and unsealed in the next section.
+
+### Step 5: Deploy httproute (skip if not using contour)
+```bash
+kubectl apply -f 06-vault-httproute.yaml
+```
 
 ## Initialization & Unsealing
 
@@ -263,14 +279,12 @@ kubectl get csidriver
 
 2. Create the `SecretProviderClass`:
 ```bash
-kubectl apply -f 06-vault-csi-provider-class.yaml
-
+kubectl apply -f 07-vault-csi-provider-class.yaml
 ```
 
 3. Deploy the test app in the default namespace:
 ```bash
 kubectl apply -f vault-csi-test.yaml
-
 ```
 
 4. Verify the Pod is running and the secret was mounted:
@@ -283,9 +297,7 @@ vault-csi-test     1/1     Running   0          3s
 kubectl exec -it vault-csi-test -n default -- cat /vault/secrets/config.txt
 
 secret-key-9988
-
 ```
-
 
 ## Troubleshooting
 
