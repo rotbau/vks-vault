@@ -88,6 +88,8 @@ vault-ui                   LoadBalancer   10.98.221.73     192.168.150.19   8200
 
 ### Step 1: Initialize Vault-0
 
+Use Vault CLI to Initialize Vault
+
 ```bash
 # We need to supply the certificate since we used a self-signed cert
 kubectl exec -i vault-0 -n vault -- vault operator init \
@@ -101,7 +103,7 @@ chmod 600 vault-keys.json
 
 ### Step 2: Unseal Raft Nodes
 
-You must unseal each node in the HA cluster using 3 of the 5 generated keys.
+You must unseal each node in the HA cluster using 3 of the 5 generated keys.  Use the Vault CLI to Unseal all Pods.
 
 #### Vault-0 (Active Leader)
 
@@ -168,6 +170,8 @@ Sealed                  false                 <---- Sealed False
 
 ### Step 3: Verify Pod and UI Readiness
 
+Verify all pods are READY 1/1 and Running Status
+
 ```bash
 kubectl get po -n vault
 
@@ -180,6 +184,7 @@ vault-agent-injector-c94798c8d-22sj8   1/1     Running   0          27m
 ```
 
 ### Step 4: Verify Raft Peers
+
 ```
 # Use the <ROOT_TOKEN> from vault-keys.json
 
