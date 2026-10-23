@@ -79,6 +79,7 @@ helm install vault hashicorp/vault --version 0.34.1 --values example-values.yaml
 
 ```
 k get svc vault-ui -n vault
+
 NAME                       TYPE           CLUSTER-IP       EXTERNAL-IP      PORT(S)             AGE
 vault-ui                   LoadBalancer   10.98.221.73     192.168.150.19   8200:31087/TCP      10m
 ```
