@@ -11,7 +11,7 @@ metadata:
   name: vault-internal-cert
   namespace: vault
 spec:
-  secretName: vault-internal-tls-secret
+  secretName: vault-tls-secret
   duration: 8760h # 1 year
   renewBefore: 720h
   isCA: true
@@ -34,7 +34,7 @@ spec:
     - vault-0.vault-internal
     - vault-1.vault-internal
     - vault-2.vault-internal
-    - vault01.vtechk8s.com
+    - vault.vtechk8s.com
     - localhost
   ipAddresses:
     - 127.0.0.1
