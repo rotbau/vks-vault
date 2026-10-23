@@ -2,7 +2,7 @@
 
 This repository contains a proof-of-concept installation of HashiCorp Vault on VMware vSphere Kubernetes Service (VKS). This repository leverages Helm to install Vault.
 
-This installation uses self-signed certificates for internal Raft communication and Vault connections, and it is not intended as an enterprise ready installation. While the `helm-values.yaml` file does adhere to security best practices, it is not intended for a production installation, and you should follow the official HashiCorp Vault documentation.
+This installation uses self-signed certificates for internal Raft communication and Vault connections, and it is not intended as an enterprise ready installation. While the `example-values.yaml` file does adhere to security best practices, it is not intended for a production installation, and you should follow the official HashiCorp Vault documentation.
 
 This documentation and all accompanying code, scripts, and manifests are provided **"AS IS" WITHOUT WARRANTY OF ANY KIND**, either expressed or implied, including but not limited to the implied warranties of merchantability, fitness for a particular purpose, or non-infringement. The entire risk as to the quality, execution, and performance of these steps is borne entirely by you. In no event shall the authors be liable for any damages, system failures, data loss, or production outages resulting from the use of this guide. Use these materials at your own discretion.
 
@@ -78,13 +78,8 @@ helm install vault hashicorp/vault --version 0.34.1 --values example-values.yaml
 ### Step 6: Create DNS record to match vault-ui service External-IP
 
 ```
-k get svc -n vault
+k get svc vault-ui -n vault
 NAME                       TYPE           CLUSTER-IP       EXTERNAL-IP      PORT(S)             AGE
-vault                      ClusterIP      10.98.11.67      <none>           8200/TCP,8201/TCP   10m
-vault-active               ClusterIP      10.98.189.6      <none>           8200/TCP,8201/TCP   10m
-vault-agent-injector-svc   ClusterIP      10.100.227.152   <none>           443/TCP             10m
-vault-internal             ClusterIP      None             <none>           8200/TCP,8201/TCP   10m
-vault-standby              ClusterIP      10.105.216.97    <none>           8200/TCP,8201/TCP   10m
 vault-ui                   LoadBalancer   10.98.221.73     192.168.150.19   8200:31087/TCP      10m
 ```
 
@@ -183,18 +178,52 @@ vault-agent-injector-c94798c8d-22sj8   1/1     Running   0          27m
 
 ```
 
-Validate the Web UI is reachable via the ingress route configured:
+### Step 4: Verify Raft Peers
+```
+# Use the <ROOT_TOKEN> from vault-keys.json
+
+kubectl exec -it vault-0 -n vault -- env VAULT_TOKEN="<ROOT_TOKEN>" vault operator raft list-peers
+
+Node       Address                        State       Voter
+----       -------                        -----       -----
+vault-0    vault-0.vault-internal:8201    leader      true
+vault-1    vault-1.vault-internal:8201    follower    true
+vault-2    vault-2.vault-internal:8201    follower    true
+
+```
+### Step 5: Enable Audit Logging (example-values.yaml sets audit storage enabled but you need to enable audit file)
 
 ```bash
-curl -vv https://vault.example.com:8200
+# Use the <ROOT_TOKEN> from vault-keys.json
 
+kubectl exec -it vault-0 -n vault -- env VAULT_TOKEN="<ROOT_TOKEN>" vault audit enable file file_path=/vault/audit/vault_audit.log
+
+Success! Enabled the file audit device at: file/
+
+# Verify Logging Enabled
+ kubectl exec -it vault-0 -n vault -- ls -la /vault/audit/
+
+drwxrwsr-x    3 root     vault         4096 Oct 23 14:22 .
+drwxr-xr-x    1 vault    vault         4096 Oct 22 23:14 ..
+drwxrws---    2 root     vault        16384 Oct 22 23:14 lost+found
+-rw-------    1 vault    vault         1624 Oct 23 14:22 vault_audit.log
+
+# The configuration is automatically replicated to vault-1 and vault-2 and would activate if a node is promoted to leader
+```
+
+### Step 6: Verify Vault Web UI
+
+```bash
+curl -vv -I -k https://vault.example.com:8200
 ```
 
 You can now log into the Web UI using the `root_token` found in the `vault-keys.json` file.
 https://vault.example.com:8200
+
+
 ## Workload Testing
 
-### Vault Base Configuration (KV Engine, Policy, Auth)
+### Vault Base Configuration (Enable Audit, KV Engine, Policy, Auth)
 
 This section covers enabling the KV V2 engine, creating a sample secret, enabling Kubernetes Auth, and creating an application policy and role. This sets the foundation for testing and is **NOT INTENDED** as a production example.
 

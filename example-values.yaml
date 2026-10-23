@@ -29,7 +29,7 @@ server:
     accessMode: ReadWriteOnce
 
   auditStorage:
-    enabled: true                     # volume only; still need `vault audit enable` (see below)
+    enabled: true                     # volume only; still need `vault audit enable` (see README.md)
     size: 5Gi
     storageClass: "<your-storage-class-name>"
 
