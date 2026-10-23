@@ -75,7 +75,7 @@ helm install vault hashicorp/vault --version 0.34.1 --values example-values.yaml
 
 **Note:** Immediately after installing, if you check `kubectl get po -n vault`, the Vault pods will show as `0/1 READY`. This is expected behavior; they will fail their readiness probes until they are initialized and unsealed in the next section.
 
-## Step 6: Create DNS record to match vault-ui service External-IP
+### Step 6: Create DNS record to match vault-ui service External-IP
 
 ```
 k get svc -n vault
